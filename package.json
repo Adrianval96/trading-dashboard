@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
+    "gen:api": "openapi-typescript contract/openapi.yaml -o src/api/schema.ts"
   },
   "dependencies": {
     "next": "16.4.0",
@@ -14,11 +17,13 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
-    "typescript": "^5"
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5",
+    "vitest": "^5.0.4"
   }
 }
