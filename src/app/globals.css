@@ -1,37 +1,101 @@
 :root {
-  --paper: #ECF1EC; --sheet: #F8FAF6; --grid: #DDE6DD; --rule: #C6D1C8;
-  --ink: #16202A; --ink-2: #4A5763; --ink-3: #7B8791;
-  --accent: #2344C4; --accent-ink: #FFFFFF; --accent-soft: #C9D3F2;
-  --gain: #1B7A4C; --loss: #B3382B; --warn: #9C6411;
-  --s1: #2344C4; --s2: #8B3DB4; --s3: #B5741A; --s4: #127A80; --s5: #C23F6E; --hold: #67737D;
-  --font-display: var(--font-plex-condensed), "Arial Narrow", "Roboto Condensed", sans-serif;
+  --paper: #ecf1ec;
+  --sheet: #f8faf6;
+  --grid: #dde6dd;
+  --rule: #c6d1c8;
+  --ink: #16202a;
+  --ink-2: #4a5763;
+  --ink-3: #7b8791;
+  --accent: #2344c4;
+  --accent-ink: #ffffff;
+  --accent-soft: #c9d3f2;
+  --gain: #1b7a4c;
+  --loss: #b3382b;
+  --warn: #9c6411;
+  --s1: #2344c4;
+  --s2: #8b3db4;
+  --s3: #b5741a;
+  --s4: #127a80;
+  --s5: #c23f6e;
+  --hold: #67737d;
+  --font-display:
+    var(--font-plex-condensed), "Arial Narrow", "Roboto Condensed", sans-serif;
   --font-body: var(--font-plex-sans), "Helvetica Neue", Arial, sans-serif;
   --font-data: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0E1418; --sheet: #141C21; --grid: #1C272D; --rule: #2A363D;
-    --ink: #E1E8E3; --ink-2: #A5B2AE; --ink-3: #75837F;
-    --accent: #7590FF; --accent-ink: #0A0F1F; --accent-soft: #26325A;
-    --gain: #4DC48B; --loss: #F27C6B; --warn: #E2A64B;
-    --s1: #7D96FF; --s2: #C28DEB; --s3: #E7B15B; --s4: #50C4CA; --s5: #F281AA; --hold: #8F9BA5;
+    --paper: #0e1418;
+    --sheet: #141c21;
+    --grid: #1c272d;
+    --rule: #2a363d;
+    --ink: #e1e8e3;
+    --ink-2: #a5b2ae;
+    --ink-3: #75837f;
+    --accent: #7590ff;
+    --accent-ink: #0a0f1f;
+    --accent-soft: #26325a;
+    --gain: #4dc48b;
+    --loss: #f27c6b;
+    --warn: #e2a64b;
+    --s1: #7d96ff;
+    --s2: #c28deb;
+    --s3: #e7b15b;
+    --s4: #50c4ca;
+    --s5: #f281aa;
+    --hold: #8f9ba5;
     color-scheme: dark;
   }
 }
 
-* { box-sizing: border-box }
-body {
-  margin: 0; color: var(--ink); background-color: var(--paper);
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 28px 28px; font: 15px/1.5 var(--font-body);
-  padding-inline: 16px; padding-block: 0 40px;
+* {
+  box-sizing: border-box;
 }
-button, input, select { font: inherit; color: inherit }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  font: 15px/1.5 var(--font-body);
+  padding-inline: 16px;
+  padding-block: 0 40px;
+}
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
-.label { margin: 0; font: 600 12px/1.2 var(--font-display); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2) }
-.gain { color: var(--gain) }
-.loss { color: var(--loss) }
-.muted { color: var(--ink-3) }
+.label {
+  margin: 0;
+  font: 600 12px/1.2 var(--font-display);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.gain {
+  color: var(--gain);
+}
+.loss {
+  color: var(--loss);
+}
+.muted {
+  color: var(--ink-3);
+}
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important } }
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

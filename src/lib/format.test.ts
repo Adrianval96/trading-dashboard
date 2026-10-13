@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { bestAgent, marketShort, progressPercent, relativeTime, signedPercent } from "@/lib/format";
+import {
+  bestAgent,
+  marketShort,
+  progressPercent,
+  relativeTime,
+  signedPercent,
+} from "@/lib/format";
 import { MOCK_RUNS } from "@/mock/runs";
 
 const [queued, running, completed] = MOCK_RUNS;
@@ -8,7 +14,9 @@ const [queued, running, completed] = MOCK_RUNS;
 describe("format", () => {
   it("shortens a market to two symbols and a count", () => {
     expect(marketShort(running.market)).toBe("SYN01 SYN02 +3 · 1d");
-    expect(marketShort({ ...running.market, symbols: ["SYN03", "SYN04"] })).toBe("SYN03 SYN04 · 1d");
+    expect(
+      marketShort({ ...running.market, symbols: ["SYN03", "SYN04"] }),
+    ).toBe("SYN03 SYN04 · 1d");
   });
 
   it("signs percentages with a real minus sign", () => {

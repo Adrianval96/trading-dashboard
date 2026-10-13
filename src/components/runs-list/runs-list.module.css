@@ -1,31 +1,133 @@
-.head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px }
-.count { font: 500 12px var(--font-data); color: var(--ink-3) }
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.count {
+  font: 500 12px var(--font-data);
+  color: var(--ink-3);
+}
 
-.list { list-style: none; margin: 0; padding: 0 0 6px; display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity }
-.list li { flex: 0 0 236px; scroll-snap-align: start }
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 6px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+.list li {
+  flex: 0 0 236px;
+  scroll-snap-align: start;
+}
 
-.item { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid var(--rule); border-radius: 2px; background: var(--sheet) }
-.row { display: flex; justify-content: space-between; align-items: center; gap: 8px }
-.id { font: 500 13px var(--font-data) }
-.market { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.foot { font-size: 12px }
-.agents { display: inline-flex; gap: 3px; align-items: center }
-.best { font: 500 13px var(--font-data) }
-.when { font-size: 12px; color: var(--ink-3) }
+.item {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--sheet);
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.id {
+  font: 500 13px var(--font-data);
+}
+.market {
+  font-size: 13px;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.foot {
+  font-size: 12px;
+}
+.agents {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.best {
+  font: 500 13px var(--font-data);
+}
+.when {
+  font-size: 12px;
+  color: var(--ink-3);
+}
 
-.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 1px; flex: none }
-.hold { background: repeating-linear-gradient(90deg, var(--hold) 0 3px, transparent 3px 5px) }
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
+  flex: none;
+}
+.hold {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--hold) 0 3px,
+    transparent 3px 5px
+  );
+}
 
-.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 11px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; padding: 4px 7px; border-radius: 2px; border: 1px solid currentColor; white-space: nowrap }
-.pill i { width: 6px; height: 6px; border-radius: 50%; background: currentColor }
-.pill[data-status="running"], .pill[data-status="queued"] { color: var(--accent) }
-.pill[data-status="running"] i { animation: pulse 1.1s ease-in-out infinite }
-.pill[data-status="completed"] { color: var(--gain) }
-.pill[data-status="failed"] { color: var(--loss) }
-@keyframes pulse { 50% { opacity: .25 } }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 11px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 7px;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.pill i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.pill[data-status="running"],
+.pill[data-status="queued"] {
+  color: var(--accent);
+}
+.pill[data-status="running"] i {
+  animation: pulse 1.1s ease-in-out infinite;
+}
+.pill[data-status="completed"] {
+  color: var(--gain);
+}
+.pill[data-status="failed"] {
+  color: var(--loss);
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
 
 @media (min-width: 1040px) {
-  .rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start }
-  .list { flex-direction: column; overflow: visible; max-height: calc(100vh - 80px); overflow-y: auto }
-  .list li { flex: none }
+  .rail {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    align-self: start;
+  }
+  .list {
+    flex-direction: column;
+    overflow: visible;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+  .list li {
+    flex: none;
+  }
 }

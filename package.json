@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
-    "gen:api": "openapi-typescript contract/openapi.yaml -o src/api/schema.ts"
+    "gen:api": "openapi-typescript contract/openapi.yaml -o src/api/schema.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "next": "16.4.0",
@@ -23,6 +25,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "openapi-typescript": "^7.13.0",
+    "prettier": "3.9.10",
     "typescript": "^5",
     "vitest": "^5.0.4"
   }

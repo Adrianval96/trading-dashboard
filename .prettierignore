@@ -1,0 +1,4 @@
+contract/
+design/
+src/api/schema.ts
+package-lock.json

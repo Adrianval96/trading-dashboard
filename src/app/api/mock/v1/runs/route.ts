@@ -7,12 +7,28 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const page = Number(params.get("page") ?? 1);
   const limit = Number(params.get("limit") ?? 20);
-  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > MAX_LIMIT) {
+  if (
+    !Number.isInteger(page) ||
+    page < 1 ||
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > MAX_LIMIT
+  ) {
     const message = `page must be a whole number from 1 and limit from 1 to ${MAX_LIMIT}.`;
-    const body: ErrorEnvelope = { success: false, data: null, error: { code: "invalid_parameters", message }, meta: null };
+    const body: ErrorEnvelope = {
+      success: false,
+      data: null,
+      error: { code: "invalid_parameters", message },
+      meta: null,
+    };
     return Response.json(body, { status: 400 });
   }
   const data = MOCK_RUNS.slice((page - 1) * limit, page * limit);
-  const body: RunListEnvelope = { success: true, data, error: null, meta: { total: MOCK_RUNS.length, page, limit } };
+  const body: RunListEnvelope = {
+    success: true,
+    data,
+    error: null,
+    meta: { total: MOCK_RUNS.length, page, limit },
+  };
   return Response.json(body);
 }

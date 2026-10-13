@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 
 import { listRuns, type RunSummary } from "@/api/client";
-import { bestAgent, marketShort, progressPercent, relativeTime, signedPercent } from "@/lib/format";
+import {
+  bestAgent,
+  marketShort,
+  progressPercent,
+  relativeTime,
+  signedPercent,
+} from "@/lib/format";
 
 import styles from "./runs-list.module.css";
 
@@ -18,18 +24,26 @@ const STRATEGY_COLORS = ["--s1", "--s2", "--s3", "--s4", "--s5"];
 function agentColors(agents: RunSummary["agents"]): string[] {
   let next = 0;
   return agents.map((agent) =>
-    agent.strategy === "buy-and-hold" ? "--hold" : STRATEGY_COLORS[next++ % STRATEGY_COLORS.length],
+    agent.strategy === "buy-and-hold"
+      ? "--hold"
+      : STRATEGY_COLORS[next++ % STRATEGY_COLORS.length],
   );
 }
 
 function RunOutcome({ run }: { run: RunSummary }) {
   const best = bestAgent(run);
   if (best) {
-    const tone = best.totalReturn > 0 ? "gain" : best.totalReturn < 0 ? "loss" : "";
-    return <span className={`${styles.best} ${tone}`}>{`${best.label} ${signedPercent(best.totalReturn)}`}</span>;
+    const tone =
+      best.totalReturn > 0 ? "gain" : best.totalReturn < 0 ? "loss" : "";
+    return (
+      <span className={`${styles.best} ${tone}`}>
+        {best.label} {signedPercent(best.totalReturn)}
+      </span>
+    );
   }
   const percent = progressPercent(run.progress);
-  if (LIVE_STATUSES.has(run.status) && percent !== null) return <span className={styles.best}>{`${percent}%`}</span>;
+  if (LIVE_STATUSES.has(run.status) && percent !== null)
+    return <span className={styles.best}>{`${percent}%`}</span>;
   return <span className={`${styles.best} muted`}>no result</span>;
 }
 
@@ -52,8 +66,12 @@ function RunItem({ run }: { run: RunSummary }) {
             return (
               <i
                 key={agent.id}
-                className={hold ? `${styles.swatch} ${styles.hold}` : styles.swatch}
-                style={hold ? undefined : { background: `var(${colors[index]})` }}
+                className={
+                  hold ? `${styles.swatch} ${styles.hold}` : styles.swatch
+                }
+                style={
+                  hold ? undefined : { background: `var(${colors[index]})` }
+                }
                 title={agent.label}
               />
             );
@@ -74,8 +92,12 @@ export function RunsList() {
 
   useEffect(() => {
     listRuns()
-      .then(({ data, meta }) => setState({ status: "ready", runs: data, total: meta.total }))
-      .catch((error: Error) => setState({ status: "failed", message: error.message }));
+      .then(({ data, meta }) =>
+        setState({ status: "ready", runs: data, total: meta.total }),
+      )
+      .catch((error: Error) =>
+        setState({ status: "failed", message: error.message }),
+      );
   }, []);
 
   return (
@@ -84,10 +106,14 @@ export function RunsList() {
         <h2 id="runs-heading" className="label">
           Runs
         </h2>
-        {state.status === "ready" && <span className={styles.count}>{state.total}</span>}
+        {state.status === "ready" && (
+          <span className={styles.count}>{state.total}</span>
+        )}
       </div>
       {state.status === "loading" && <p className="muted">Loading runs…</p>}
-      {state.status === "failed" && <p className="loss">{`Couldn't load runs: ${state.message}`}</p>}
+      {state.status === "failed" && (
+        <p className="loss">{`Couldn't load runs: ${state.message}`}</p>
+      )}
       {state.status === "ready" && (
         <ol className={styles.list}>
           {state.runs.map((run) => (

@@ -18,7 +18,9 @@ export default function Home() {
       <RunsList />
       <main className={styles.main}>
         <section className={styles.sheet}>
-          <p className="muted">The new-run form and the run view are not built yet.</p>
+          <p className="muted">
+            The new-run form and the run view are not built yet.
+          </p>
         </section>
       </main>
     </div>
