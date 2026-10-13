@@ -26,10 +26,7 @@ describe("GET /api/mock/v1/runs", () => {
   it("pages with page and limit", async () => {
     const { body } = await get("?page=2&limit=2");
 
-    expect(body.data.map((run: { id: string }) => run.id)).toEqual([
-      MOCK_RUNS[2].id,
-      MOCK_RUNS[3].id,
-    ]);
+    expect(body.data).toEqual(MOCK_RUNS.slice(2, 4));
     expect(body.meta).toEqual({ total: MOCK_RUNS.length, page: 2, limit: 2 });
   });
 

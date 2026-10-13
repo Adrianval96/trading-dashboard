@@ -31,20 +31,23 @@ Open http://localhost:3000. The app calls the mock API in this app. `NEXT_PUBLIC
 ```bash
 npm run lint
 npm run format:check
-npm run typecheck
+npm run type-check
 npm test
 npm run build
 ```
 
 ## Layout
 
-| Path                    | What it holds                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `contract/openapi.yaml` | The API contract, copied from strategy-arena. It changes there first, then gets copied here |
-| `src/api/schema.ts`     | Types generated from the contract with `npm run gen:api`; don't edit by hand                |
-| `src/api/client.ts`     | Typed calls to the API; a `success: false` envelope becomes an `ApiError`                   |
-| `src/mock/`             | The mock API's sample runs; the route handlers under `src/app/api/mock/v1/` serve them      |
-| `src/components/`       | UI, one folder per feature                                                                  |
-| `src/lib/`              | Formatting helpers                                                                          |
+Same conventions as Cinematic State: a component is a PascalCase folder with `index.tsx` and a plain `styles.css` using BEM-style class names (`runs-list__run`), pages render a page component, and tests sit in `__tests__/` folders next to what they cover, integration first.
+
+| Path                            | What it holds                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------- |
+| `contract/openapi.yaml`         | The API contract, copied from strategy-arena. It changes there first, then gets copied here |
+| `src/strategy-arena-types.ts`   | Types generated from the contract with `npm run generate:types`; don't edit by hand         |
+| `src/services/strategyArena.ts` | Typed calls to the API; a `success: false` envelope becomes an `ApiError`                   |
+| `src/mock/`                     | The mock API's sample runs; the route handlers under `src/app/api/mock/v1/` serve them      |
+| `src/components/`               | UI: `HomePage` loads the data, `RunsList` renders it                                        |
+| `src/utilities/`                | Formatting helpers                                                                          |
+| `src/app/_tokens.css`           | Colours and fonts, imported by `globals.css`                                                |
 
 Every API response is a `{ success, data, error, meta }` envelope with snake_case fields; times are ISO 8601 with a time zone.

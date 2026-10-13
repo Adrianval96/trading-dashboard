@@ -1,4 +1,4 @@
-import type { ErrorEnvelope, RunListEnvelope } from "@/api/client";
+import type { ErrorEnvelope, RunListEnvelope } from "@/services/strategyArena";
 import { MOCK_RUNS } from "@/mock/runs";
 
 const MAX_LIMIT = 100;

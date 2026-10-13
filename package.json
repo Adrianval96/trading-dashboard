@@ -8,10 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "next typegen && tsc --noEmit",
-    "gen:api": "openapi-typescript contract/openapi.yaml -o src/api/schema.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "type-check": "next typegen && tsc --noEmit",
+    "generate:types": "openapi-typescript contract/openapi.yaml -o src/strategy-arena-types.ts",
+    "lint:fix": "eslint --fix"
   },
   "dependencies": {
     "next": "16.4.0",
@@ -24,6 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "happy-dom": "^21.0.1",
     "openapi-typescript": "^7.13.0",
     "prettier": "3.9.10",
     "typescript": "^5",

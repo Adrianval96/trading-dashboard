@@ -1,11 +1,12 @@
-.shell {
+.home-page {
   max-width: 1320px;
   margin: 0 auto;
   display: grid;
   gap: 20px;
   grid-template-columns: minmax(0, 1fr);
 }
-.top {
+
+.home-page__header {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -14,15 +15,18 @@
   padding-block: 22px 4px;
   border-bottom: 2px solid var(--ink);
 }
-.mark {
+
+.home-page__mark {
   margin: 0;
   font: 700 30px/1 var(--font-display);
   letter-spacing: -0.01em;
 }
-.mark span {
+
+.home-page__mark span {
   color: var(--accent);
 }
-.meta {
+
+.home-page__meta {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -30,7 +34,8 @@
   font-size: 13px;
   color: var(--ink-2);
 }
-.tag {
+
+.home-page__tag {
   font: 500 11px/1 var(--font-data);
   padding: 5px 7px;
   border: 1px solid var(--rule);
@@ -38,27 +43,31 @@
   border-radius: 2px;
   color: var(--ink-2);
 }
-.main {
+
+.home-page__main {
   display: grid;
   gap: 20px;
   min-width: 0;
 }
-.sheet {
+
+.home-page__sheet {
   background: var(--sheet);
   border: 1px solid var(--rule);
   border-radius: 2px;
   padding: 16px;
 }
-.sheet p {
+
+.home-page__sheet p {
   margin: 0;
 }
 
 @media (min-width: 1040px) {
-  .shell {
+  .home-page {
     grid-template-columns: 290px minmax(0, 1fr);
     column-gap: 28px;
   }
-  .top {
+
+  .home-page__header {
     grid-column: 1 / -1;
   }
 }

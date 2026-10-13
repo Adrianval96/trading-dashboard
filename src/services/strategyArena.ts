@@ -1,4 +1,4 @@
-import type { components } from "@/api/schema";
+import type { components } from "@/strategy-arena-types";
 
 type Schemas = components["schemas"];
 
@@ -19,7 +19,7 @@ export class ApiError extends Error {
 
 async function getJson<T extends { success: true }>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`);
-  const body = (await response.json()) as T | ErrorEnvelope;
+  const body: T | ErrorEnvelope = await response.json();
   if (!body.success) throw new ApiError(body.error.code, body.error.message);
   return body;
 }

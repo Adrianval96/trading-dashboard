@@ -1,4 +1,4 @@
-import type { RunSummary } from "@/api/client";
+import type { RunSummary } from "@/services/strategyArena";
 
 const HOUR_MS = 3_600_000;
 
