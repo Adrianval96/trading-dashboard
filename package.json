@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "next typegen && tsc --noEmit",
-    "generate:types": "openapi-typescript contract/openapi.yaml -o src/strategy-arena-types.ts",
+    "generate:types": "openapi-typescript contract/openapi.yaml -o src/types.ts",
     "lint:fix": "eslint --fix"
   },
   "dependencies": {

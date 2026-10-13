@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { RunsList, type RunsListState } from "@/components/RunsList";
-import { API_BASE_URL, listRuns } from "@/services/strategyArena";
+import { API_BASE_URL, listRuns } from "@/services/api";
 import "./styles.css";
 
 export function HomePage() {

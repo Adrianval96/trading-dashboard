@@ -1,4 +1,4 @@
-import type { RunSummary } from "@/services/strategyArena";
+import type { RunSummary } from "@/services/api";
 
 const DEFAULTS = { fast: 10, slow: 50, stop_loss: 0.05 };
 const SYMBOLS = [

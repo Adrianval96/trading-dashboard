@@ -1,4 +1,4 @@
-import type { components } from "@/strategy-arena-types";
+import type { components } from "@/types";
 
 type Schemas = components["schemas"];
 

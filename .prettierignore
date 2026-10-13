@@ -1,4 +1,4 @@
 contract/
 design/
-src/strategy-arena-types.ts
+src/types.ts
 package-lock.json

@@ -1,4 +1,4 @@
-import type { RunSummary } from "@/services/strategyArena";
+import type { RunSummary } from "@/services/api";
 import {
   bestAgent,
   marketShort,
