@@ -1,0 +1,643 @@
+<title>trading-dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a chart recorder on engineering paper. Run history rail on the left, composer above the live plot sheet on the right; on phones one column with a sideways history strip. */
+:root {
+  --paper: #ECF1EC; --sheet: #F8FAF6; --grid: #DDE6DD; --rule: #C6D1C8;
+  --ink: #16202A; --ink-2: #4A5763; --ink-3: #7B8791;
+  --accent: #2344C4; --accent-ink: #FFFFFF; --accent-soft: #C9D3F2;
+  --gain: #1B7A4C; --loss: #B3382B; --warn: #9C6411;
+  --s1: #2344C4; --s2: #8B3DB4; --s3: #B5741A; --s4: #127A80; --s5: #C23F6E; --hold: #67737D;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0E1418; --sheet: #141C21; --grid: #1C272D; --rule: #2A363D;
+  --ink: #E1E8E3; --ink-2: #A5B2AE; --ink-3: #75837F;
+  --accent: #7590FF; --accent-ink: #0A0F1F; --accent-soft: #26325A;
+  --gain: #4DC48B; --loss: #F27C6B; --warn: #E2A64B;
+  --s1: #7D96FF; --s2: #C28DEB; --s3: #E7B15B; --s4: #50C4CA; --s5: #F281AA; --hold: #8F9BA5;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0E1418; --sheet: #141C21; --grid: #1C272D; --rule: #2A363D;
+  --ink: #E1E8E3; --ink-2: #A5B2AE; --ink-3: #75837F;
+  --accent: #7590FF; --accent-ink: #0A0F1F; --accent-soft: #26325A;
+  --gain: #4DC48B; --loss: #F27C6B; --warn: #E2A64B;
+  --s1: #7D96FF; --s2: #C28DEB; --s3: #E7B15B; --s4: #50C4CA; --s5: #F281AA; --hold: #8F9BA5;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body {
+  margin: 0; color: var(--ink); background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px; font: 15px/1.5 var(--font-body);
+  padding-inline: 16px; padding-block: 0 40px;
+}
+button, input, select { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.label { margin: 0; font: 600 12px/1.2 var(--font-display); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2) }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums }
+.gain { color: var(--gain) } .loss { color: var(--loss) } .muted { color: var(--ink-3) }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 1px; flex: none }
+.sw.hold { background: repeating-linear-gradient(90deg, var(--hold) 0 3px, transparent 3px 5px) !important }
+
+.shell { max-width: 1320px; margin: 0 auto; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) }
+.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; padding-block: 22px 4px; border-bottom: 2px solid var(--ink) }
+.mark { margin: 0; font: 700 30px/1 var(--font-display); letter-spacing: -.01em }
+.mark span { color: var(--accent) }
+.top-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ink-2) }
+.tag { font: 500 11px/1 var(--font-data); padding: 5px 7px; border: 1px solid var(--rule); background: var(--sheet); border-radius: 2px; color: var(--ink-2) }
+
+.rail-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px }
+.count { font: 500 12px var(--font-data); color: var(--ink-3) }
+.rail-list { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity }
+.rail-list li { flex: 0 0 236px; scroll-snap-align: start }
+.run-item { width: 100%; text-align: left; display: grid; gap: 4px; padding: 11px 12px; border: 1px solid var(--rule); border-radius: 2px; background: var(--sheet); cursor: pointer; transition: background-color .15s, border-color .15s, transform .15s }
+.run-item:hover { border-color: var(--ink-3) }
+.run-item:active { transform: translateY(1px) }
+.run-item.is-selected { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+.run-item.is-selected .ri-market, .run-item.is-selected .ri-when { color: var(--paper); opacity: .72 }
+.ri-top, .ri-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px }
+.ri-id { font: 500 13px var(--font-data) }
+.ri-market { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.ri-foot { font-size: 12px }
+.ri-agents { display: inline-flex; gap: 3px; align-items: center }
+.ri-best { font: 500 13px var(--font-data) }
+.ri-when { font-size: 12px; color: var(--ink-3) }
+.run-item.is-selected .gain { color: var(--paper) } .run-item.is-selected .loss { color: var(--paper) }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 11px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; padding: 4px 7px; border-radius: 2px; border: 1px solid currentColor; white-space: nowrap }
+.pill i { width: 6px; height: 6px; border-radius: 50%; background: currentColor }
+.pill[data-s="running"], .pill[data-s="queued"] { color: var(--accent) }
+.pill[data-s="running"] i { animation: pulse 1.1s ease-in-out infinite }
+.pill[data-s="completed"] { color: var(--gain) }
+.pill[data-s="failed"] { color: var(--loss) }
+.run-item.is-selected .pill { color: var(--paper) }
+@keyframes pulse { 50% { opacity: .25 } }
+
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 2px }
+.composer { padding: 16px; display: grid; gap: 14px }
+.composer-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap }
+.composer-head p { margin: 0; font-size: 13px; color: var(--ink-3) }
+.agents { display: grid; gap: 8px }
+.agent-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--rule) }
+.field { display: grid; gap: 3px; min-width: 0 }
+.field > span { font: 500 11px var(--font-data); color: var(--ink-3) }
+.field input, .field select { height: 34px; padding: 0 9px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); min-width: 0 }
+.field input:focus, .field select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-soft) }
+.f-label input { width: 120px } .f-strategy select { width: 210px } .f-num input { width: 84px; font-family: var(--font-data) }
+.f-symbols { flex: 1 1 100% }
+.chips { display: flex; flex-wrap: wrap; gap: 5px }
+.chip { height: 28px; padding: 0 9px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); cursor: pointer; font: 500 12px var(--font-data) }
+.chip:hover:not(:disabled) { border-color: var(--ink-3) }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+.chip:disabled { opacity: .35; cursor: not-allowed; text-decoration: line-through }
+.f-cost input { width: 96px; font-family: var(--font-data) }
+.f-date input { width: 150px; font-family: var(--font-data) } .f-cash input { width: 120px; font-family: var(--font-data) }
+.agent-row .sw { align-self: center; margin-top: 16px; width: 12px; height: 12px }
+.icon-btn { height: 34px; padding: 0 10px; border: 1px solid transparent; background: none; border-radius: 2px; color: var(--ink-3); cursor: pointer }
+.icon-btn:hover { color: var(--loss); border-color: var(--rule) }
+.text-btn { justify-self: start; border: 1px dashed var(--ink-3); background: none; padding: 6px 10px; border-radius: 2px; cursor: pointer; font-size: 13px; color: var(--ink-2) }
+.text-btn:hover { border-style: solid; color: var(--ink) }
+.market { display: flex; flex-wrap: wrap; gap: 10px; align-items: end }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 2px; height: 34px }
+.seg button { border: 0; background: var(--paper); padding: 0 12px; cursor: pointer; font: 500 13px var(--font-data) }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.go { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding-top: 2px }
+.form-error { margin: 0; color: var(--loss); font-size: 14px; max-width: 60ch }
+.run-btn {
+  --p: 0%; position: relative; min-width: 220px; height: 46px; padding: 0 18px; border: 0; border-radius: 2px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 18px;
+  font: 600 16px var(--font-display); letter-spacing: .02em; color: var(--accent-ink); background: var(--accent);
+  box-shadow: 0 2px 0 var(--ink); transition: transform .12s, box-shadow .12s, background-color .2s;
+}
+.run-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 0 var(--ink) }
+.run-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--ink) }
+.run-btn[data-state="running"], .run-btn[data-state="submitting"] { cursor: progress; transform: none; box-shadow: 0 2px 0 var(--ink);
+  background: linear-gradient(90deg, var(--accent) var(--p), color-mix(in srgb, var(--accent) 38%, var(--sheet)) var(--p)) }
+.run-btn kbd { font: 500 11px var(--font-data); opacity: .75 }
+@media (hover: none) { .run-btn kbd { display: none } }
+
+.run { display: grid; gap: 16px; min-width: 0 }
+.run-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 20px }
+.run-title { margin: 2px 0 4px; font: 700 34px/1 var(--font-data); letter-spacing: -.02em }
+.run-meta { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 70ch }
+.run-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.ghost { height: 34px; padding: 0 12px; border: 1px solid var(--ink); background: transparent; border-radius: 2px; cursor: pointer; font-size: 13px; font-weight: 500 }
+.ghost:hover { background: var(--ink); color: var(--paper) }
+.progress { height: 3px; background: var(--grid); position: relative; overflow: hidden }
+.progress span { position: absolute; inset: 0 auto 0 0; background: var(--accent); transition: width .2s linear }
+.progress-text { margin: -10px 0 0; font: 12px var(--font-data); color: var(--ink-3) }
+
+.plot { padding: 12px 12px 6px; display: grid; gap: 8px; position: relative }
+.plot-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px }
+.legend span { display: inline-flex; align-items: center; gap: 6px }
+.canvas { height: 340px; width: 100% }
+.overlay { position: absolute; inset: 44px 12px 12px; display: grid; place-items: center; text-align: center; padding: 16px; background: color-mix(in srgb, var(--sheet) 82%, transparent); color: var(--ink-2); font-size: 14px }
+.overlay.loading::after { content: ""; position: absolute; inset: auto 0 0 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: scan 1s linear infinite }
+@keyframes scan { from { transform: translateX(-100%) } to { transform: translateX(100%) } }
+
+.notice { padding: 12px 14px; border: 1px solid var(--loss); border-radius: 2px; background: color-mix(in srgb, var(--loss) 9%, var(--sheet)); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px }
+.notice p { margin: 0; max-width: 65ch } .notice strong { color: var(--loss) }
+
+.lower { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) }
+.board { padding: 12px 14px; min-width: 0 }
+.table-wrap { overflow-x: auto }
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px }
+th { text-align: right; font: 600 11px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: 6px 8px; border-bottom: 1px solid var(--ink) }
+td { padding: 9px 8px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap }
+th:nth-child(2), td:nth-child(2) { text-align: left }
+th:first-child, td:first-child { text-align: left; width: 28px; color: var(--ink-3) }
+tbody tr:first-child td { font-weight: 600 }
+.agent-cell { display: inline-flex; align-items: center; gap: 8px }
+.agent-cell small { color: var(--ink-3); font-weight: 400 }
+.tape { padding: 12px 14px; min-width: 0; display: grid; gap: 6px; align-content: start }
+.tape ol { list-style: none; margin: 0; padding: 0; max-height: 252px; overflow: auto; font: 12.5px/1.75 var(--font-data); font-variant-numeric: tabular-nums }
+.tape li { display: grid; grid-template-columns: 6.6em 1.1em 2.6em minmax(0, 1fr); gap: 6px; border-bottom: 1px dotted var(--rule); white-space: nowrap }
+.tape li span:last-child { overflow: hidden; text-overflow: ellipsis }
+.side-buy { color: var(--ink) } .side-sell { color: var(--ink-3) }
+details { font-size: 13px; color: var(--ink-2) } summary { cursor: pointer }
+pre { margin: 6px 0 0; padding: 10px; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; overflow-x: auto; font: 12px/1.5 var(--font-data) }
+.foot { font-size: 12px; color: var(--ink-3); border-top: 1px solid var(--rule); padding-top: 10px }
+
+@media (min-width: 760px) { .lower { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) } }
+@media (min-width: 1040px) {
+  .shell { grid-template-columns: 290px minmax(0, 1fr); column-gap: 28px }
+  .top, .foot { grid-column: 1 / -1 }
+  .rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start }
+  .rail-list { flex-direction: column; overflow: visible; max-height: calc(100vh - 80px); overflow-y: auto }
+  .rail-list li { flex: none }
+  .canvas { height: 380px }
+}
+@media (max-width: 520px) { .run-title { font-size: 26px } .canvas { height: 260px } .run-btn { width: 100% } .f-strategy select { width: 100% } .f-strategy { flex: 1 1 100% } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important } }
+</style>
+
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+const { useState, useEffect, useRef } = React;
+const html = htm.bind(React.createElement);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const STRATEGIES = [
+  { id: 'kronos-top5', name: 'Kronos top 5', description: 'Holds the stocks with the best positive forecast for the next bar.',
+    parameters: [{ name: 'top_k', type: 'integer', default: 5, min: 1, max: 20 }] },
+  { id: 'ma-crossover', name: 'Moving-average crossover', description: 'Long while the fast average of closes is above the slow one.',
+    parameters: [{ name: 'fast', type: 'integer', default: 10, min: 2, max: 100 }, { name: 'slow', type: 'integer', default: 50, min: 5, max: 250 },
+                 { name: 'stop_loss', type: 'number', default: 0.05, min: 0, max: 0.5 }] },
+  { id: 'buy-and-hold', name: 'Buy and hold', description: 'Buys on the first bar and never trades again.', parameters: [] },
+];
+const LATEST = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+const MARKET = {
+  intervals: [{ id: '1d', label: 'Daily', max_range_days: null }, { id: '5m', label: '5 minutes', max_range_days: 14 }],
+  symbols: [['AAPL', 'Apple'], ['MSFT', 'Microsoft'], ['NVDA', 'NVIDIA'], ['AMZN', 'Amazon'], ['GOOGL', 'Alphabet'], ['META', 'Meta Platforms'], ['TSLA', 'Tesla'],
+    ['AVGO', 'Broadcom'], ['JPM', 'JPMorgan Chase'], ['V', 'Visa'], ['UNH', 'UnitedHealth'], ['XOM', 'Exxon Mobil'], ['LLY', 'Eli Lilly'], ['JNJ', 'Johnson & Johnson'],
+    ['WMT', 'Walmart'], ['PG', 'Procter & Gamble'], ['MA', 'Mastercard'], ['HD', 'Home Depot'], ['COST', 'Costco'], ['NFLX', 'Netflix'], ['SPY', 'SPDR S&P 500 ETF']]
+    .map(([symbol, name], i) => ({ symbol, name, available: { '1d': { from: '2016-01-04', to: LATEST }, ...(i < 12 || symbol === 'SPY' ? { '5m': { from: '2024-01-02', to: LATEST } } : {}) } })),
+};
+const COST_DEFAULT_BPS = 5, MAX_AGENTS = 5, MIN_CASH = 1000;
+const SHORT_LABEL = { 'kronos-top5': 'kronos', 'ma-crossover': 'crossover', 'buy-and-hold': 'hold' };
+const defaults = id => Object.fromEntries(STRATEGIES.find(s => s.id === id).parameters.map(p => [p.name, p.default]));
+
+const ok = (data, meta = null) => ({ success: true, data, error: null, meta });
+const fail = (code, message) => ({ success: false, data: null, error: { code, message }, meta: null });
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+function rng(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+
+function timeline(market) {
+  const out = [], end = Date.parse(market.end + 'T00:00:00Z');
+  for (let d = Date.parse(market.start + 'T00:00:00Z'); d <= end; d += 864e5) {
+    const wd = new Date(d).getUTCDay(); if (wd === 0 || wd === 6) continue;
+    if (market.interval === '1d') out.push(d / 1000 + 20 * 3600);
+    else { for (let m = 0; m < 78; m++) out.push(d / 1000 + 13.5 * 3600 + m * 300); if (out.length >= 780) break; }
+  }
+  return out;
+}
+
+function simulateRun(def, seed) {
+  const r = rng(seed), intraday = def.market.interval !== '1d';
+  const drift = intraday ? 0.0004 / 78 : 0.0004, vol = intraday ? 0.011 / Math.sqrt(78) : 0.011;
+  const syms = def.market.symbols, px = Object.fromEntries(syms.map(s => [s, 60 + r() * 340]));
+  const levels = [], cost = (def.cost_bps || 0) / 1e4; let level = 100;
+  const st = def.agents.map(a => ({ a, eq: def.initial_cash, pos: 0, want: 0, entry: 0, armed: true, prev: null }));
+  return timeline(def.market).map((t, i) => {
+    const mr = drift + vol * gauss(r); level *= Math.exp(mr); levels.push(level);
+    syms.forEach(s => { px[s] *= Math.exp(mr + vol * 0.6 * gauss(r)); });
+    const agents = st.map(s => {
+      const p = s.a.parameters, trades = [];
+      const trade = (side, sym, notional) => { trades.push({ symbol: sym, side, quantity: +(notional / px[sym]).toFixed(2), price: +px[sym].toFixed(2) }); s.eq -= notional * cost; };
+      if (s.a.strategy === 'buy-and-hold') {
+        if (i === 0) syms.forEach(sym => trade('buy', sym, s.eq / syms.length)); else s.eq *= Math.exp(mr);
+      } else if (s.a.strategy === 'kronos-top5') {
+        const k = Math.min(p.top_k, syms.length);
+        if (i > 0) s.eq *= Math.exp(0.9 * mr + vol * 0.45 * gauss(r));
+        const swaps = i === 0 ? k : Math.floor(r() * Math.min(3, k + 1));
+        for (let j = 0; j < swaps; j++) trade(i === 0 || j % 2 ? 'buy' : 'sell', syms[Math.floor(r() * syms.length)], s.eq / k);
+      } else {
+        if (i > 0) s.eq *= Math.exp(s.pos * mr);
+        if (s.want !== s.pos) { syms.forEach(sym => trade(s.want ? 'buy' : 'sell', sym, s.eq / syms.length)); if (s.want) s.entry = level; s.pos = s.want; }
+        if (levels.length >= p.slow) {
+          const avg = n => levels.slice(-n).reduce((x, y) => x + y, 0) / n, sig = avg(p.fast) > avg(p.slow);
+          if (sig !== s.prev) s.armed = true;
+          s.prev = sig;
+          if (s.pos && p.stop_loss && level < s.entry * (1 - p.stop_loss)) { s.want = 0; s.armed = false; }
+          else s.want = sig && s.armed ? 1 : 0;
+        }
+      }
+      return { agent_id: s.a.id, equity: +s.eq.toFixed(2), trades };
+    });
+    return { t, agents };
+  });
+}
+
+const iso = t => new Date(t * 1000).toISOString();
+
+const api = (() => {
+  const runs = new Map(); let serial = 0;
+  const newId = () => 'run_' + Math.floor(rng(Date.now() + ++serial)() * 0xffff).toString(16).padStart(4, '0');
+  const validate = b => {
+    if (!b.agents.length) return 'Add at least one agent.';
+    if (!b.market.symbols.length) return 'Choose at least one symbol.';
+    const iv = MARKET.intervals.find(x => x.id === b.market.interval);
+    if (!iv) return `Unknown interval "${b.market.interval}".`;
+    if (b.market.start >= b.market.end) return 'The start date must be before the end date.';
+    for (const sym of b.market.symbols) {
+      const m = MARKET.symbols.find(x => x.symbol === sym), av = m && m.available[iv.id];
+      if (!av) return `${sym} has no ${iv.label.toLowerCase()} data.`;
+      if (b.market.start < av.from || b.market.end > av.to) return `${sym} has ${iv.label.toLowerCase()} data from ${day(av.from)} to ${day(av.to)} only.`;
+    }
+    if (iv.max_range_days && (Date.parse(b.market.end) - Date.parse(b.market.start)) / 864e5 > iv.max_range_days) return `${iv.label} runs can cover at most ${iv.max_range_days} days.`;
+    if (!(b.initial_cash > 0)) return 'Starting cash must be more than zero.';
+    if (b.cost_bps !== undefined && !(b.cost_bps >= 0)) return 'Costs must be zero or more basis points per side.';
+    for (const a of b.agents) {
+      const s = STRATEGIES.find(x => x.id === a.strategy);
+      for (const p of s.parameters) { const v = a.parameters[p.name]; if (!(v >= p.min && v <= p.max)) return `${a.label}: ${p.name} must be between ${p.min} and ${p.max}.`; }
+      if (a.strategy === 'ma-crossover' && a.parameters.fast >= a.parameters.slow) return `${a.label}: slow (${a.parameters.slow}) must be greater than fast (${a.parameters.fast}).`;
+    }
+    return null;
+  };
+  const view = d => ({
+    id: d.id, status: d.status, created_at: d.created_at, market: d.market, initial_cash: d.initial_cash, cost_bps: d.cost_bps,
+    agents: d.agents.map(({ id, label, strategy, parameters }) => ({ id, label, strategy, parameters })),
+    progress: { steps_done: d.done, steps_total: d.total }, failure: d.failure || null,
+    result: d.status !== 'completed' ? null : { agents: d.agents.map((a, k) => {
+      const eq = d.steps.map(s => s.agents[k].equity), final = eq[eq.length - 1];
+      return { agent_id: a.id, final_equity: final, total_return: final / d.initial_cash - 1,
+        equity: d.steps.map(s => ({ timestamp: iso(s.t), equity: s.agents[k].equity })),
+        trades: d.steps.flatMap(s => s.agents[k].trades.map(tr => ({ timestamp: iso(s.t), ...tr }))) };
+    }) },
+  });
+  function store(body, extra) {
+    const d = { status: 'queued', created_at: new Date().toISOString(), market: body.market, initial_cash: body.initial_cash, cost_bps: body.cost_bps ?? 0,
+      agents: body.agents.map((a, i) => ({ id: 'agt_' + (i + 1), ...a })), ...extra };
+    d.id = d.id || newId();
+    d.steps = simulateRun(d, d.seed || Date.now() % 100000);
+    d.total = d.steps.length;
+    if (d.failAt) { d.steps = d.steps.slice(0, d.failAt); d.done = d.failAt; }
+    else d.done = d.status === 'completed' ? d.total : 0;
+    runs.set(d.id, d); return d;
+  }
+  const ago = h => new Date(Date.now() - h * 36e5).toISOString();
+  const A = (label, strategy, parameters) => ({ label, strategy, parameters: { ...defaults(strategy), ...parameters } });
+  [
+    { id: 'run_8f3a', h: 2, seed: 11, cost: 5, agents: [A('kronos', 'kronos-top5'), A('crossover', 'ma-crossover'), A('hold', 'buy-and-hold')],
+      market: { symbols: ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META'], interval: '1d', start: '2025-01-02', end: '2026-09-30' } },
+    { id: 'run_41be', h: 9, seed: 47, cost: 2, agents: [A('fast cross', 'ma-crossover', { fast: 6, slow: 24, stop_loss: 0.01 }), A('hold', 'buy-and-hold')],
+      market: { symbols: ['NVDA'], interval: '5m', start: '2026-09-14', end: '2026-09-25' } },
+    { id: 'run_5d20', h: 26, seed: 5, failAt: 212, failure: { message: 'Market data is missing for NVDA on 19 Aug 2025.' },
+      agents: [A('top 3', 'kronos-top5', { top_k: 3 }), A('top 8', 'kronos-top5', { top_k: 8 })],
+      market: { symbols: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'JPM', 'XOM', 'LLY', 'COST'], interval: '1d', start: '2025-01-02', end: '2026-09-30' } },
+    { id: 'run_77c1', h: 30, seed: 23, cost: 5, agents: [A('slow cross', 'ma-crossover', { fast: 20, slow: 100, stop_loss: 0 }), A('quick cross', 'ma-crossover', { fast: 5, slow: 30, stop_loss: 0.03 }), A('hold', 'buy-and-hold')],
+      market: { symbols: ['SPY'], interval: '1d', start: '2025-03-03', end: '2026-06-30' } },
+    { id: 'run_2a9e', h: 74, seed: 91, agents: [A('kronos', 'kronos-top5'), A('hold', 'buy-and-hold')],
+      market: { symbols: ['SPY', 'AAPL', 'MSFT'], interval: '1d', start: '2025-07-01', end: '2026-09-30' } },
+  ].forEach(r => store({ agents: r.agents, market: r.market, initial_cash: 100000, cost_bps: r.cost },
+    { id: r.id, seed: r.seed, created_at: ago(r.h), status: r.failure ? 'failed' : 'completed', failAt: r.failAt, failure: r.failure }));
+
+  return {
+    async listStrategies() { await wait(120); return ok(STRATEGIES); },
+    async getMarket() { await wait(140); return ok(MARKET); },
+    async listRuns() { await wait(160); const all = [...runs.values()].sort((x, y) => y.created_at.localeCompare(x.created_at)).map(d => { const v = view(d);
+      return { ...v, result: v.result && { agents: v.result.agents.map(({ agent_id, final_equity, total_return }) => ({ agent_id, final_equity, total_return })) } }; });
+      return ok(all, { total: all.length, page: 1, limit: 20 }); },
+    async getRun(id) { await wait(320); const d = runs.get(id); return d ? ok(view(d)) : fail('not_found', `No run with id ${id}.`); },
+    async createRun(body) { await wait(420); const err = validate(body); if (err) return fail('invalid_parameters', err);
+      const d = store(body, {}); return ok({ id: d.id, status: d.status, created_at: d.created_at, steps_total: d.total, agents: d.agents.map(({ id, label }) => ({ id, label })) }); },
+    events(id, on) {
+      const d = runs.get(id), per = Math.max(1, Math.ceil(d.total / 170)); let i = 0;
+      const timer = setInterval(() => {
+        d.status = 'running';
+        for (let k = 0; k < per && i < d.steps.length; k++, i++) { d.done = i + 1; on({ event: 'step', data: { timestamp: iso(d.steps[i].t), agents: d.steps[i].agents } }); }
+        if (i >= d.steps.length) { clearInterval(timer); d.status = 'completed'; on({ event: 'completed', data: {} }); }
+      }, 45);
+      return () => clearInterval(timer);
+    },
+  };
+})();
+
+function withColors(agents) { let n = 0; return agents.map(a => ({ ...a, color: a.strategy === 'buy-and-hold' ? '--hold' : `--s${(n++ % 5) + 1}` })); }
+function fromView(v) {
+  const steps = !v.result ? [] : v.result.agents[0].equity.map((pt, i) => {
+    const t = Date.parse(pt.timestamp) / 1000;
+    return { t, agents: v.result.agents.map(a => ({ agent_id: a.agent_id, equity: a.equity[i].equity, trades: [] })) };
+  });
+  if (v.result) { const at = new Map(steps.map((s, i) => [iso(s.t), i]));
+    v.result.agents.forEach((a, k) => a.trades.forEach(({ timestamp, ...tr }) => steps[at.get(timestamp)].agents[k].trades.push(tr))); }
+  return { ...v, agents: withColors(v.agents), steps, loaded: true, steps_done: v.progress.steps_done, steps_total: v.progress.steps_total };
+}
+
+function standings(run) {
+  if (!run.steps.length) return [];
+  const rows = run.agents.map((a, k) => {
+    let peak = run.initial_cash, dd = 0, trades = 0, eq = run.initial_cash;
+    for (const s of run.steps) { eq = s.agents[k].equity; trades += s.agents[k].trades.length; if (eq > peak) peak = eq; dd = Math.min(dd, eq / peak - 1); }
+    return { a, eq, ret: eq / run.initial_cash - 1, dd, trades };
+  });
+  const hold = rows.find(r => r.a.strategy === 'buy-and-hold');
+  return rows.map(r => ({ ...r, vs: hold && r !== hold ? r.ret - hold.ret : null })).sort((x, y) => y.eq - x.eq);
+}
+
+const money = v => '$' + Math.round(v).toLocaleString('en-US');
+const signed = (v, unit = '%') => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(1) + (unit === '%' ? '%' : ' pts');
+const tone = v => v > 0 ? 'gain' : v < 0 ? 'loss' : '';
+const fDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const fTick = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: '2-digit', timeZone: 'UTC' });
+const fTickTime = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+const fWhen = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const day = s => fDate.format(Date.parse(s + 'T00:00:00Z'));
+const marketShort = m => `${m.symbols.length > 2 ? m.symbols.slice(0, 2).join(' ') + ' +' + (m.symbols.length - 2) : m.symbols.join(' ')} · ${m.interval}`;
+const marketLong = m => `${m.symbols.join(', ')} · ${m.interval === '1d' ? 'daily bars' : '5-minute bars'} · ${day(m.start)} → ${day(m.end)}`;
+function relTime(isoStr) { const h = (Date.now() - Date.parse(isoStr)) / 36e5;
+  return h < 0.02 ? 'Just now' : h < 1 ? `${Math.round(h * 60)} min ago` : h < 24 ? `${Math.round(h)} h ago` : h < 48 ? 'Yesterday' : `${Math.round(h / 24)} days ago`; }
+
+function Status({ status }) { return html`<span class="pill" data-s=${status}><i></i>${status}</span>`; }
+function Swatch({ a }) { return html`<i class=${'sw' + (a.strategy === 'buy-and-hold' ? ' hold' : '')} style=${{ background: `var(${a.color})` }}></i>`; }
+
+function History({ runs, selectedId, onSelect }) {
+  return html`<section class="rail" aria-labelledby="runs-h">
+    <div class="rail-head"><h2 id="runs-h" class="label">Runs</h2><span class="count">${runs.length}</span></div>
+    <ol class="rail-list">${runs.map(r => {
+      const sel = r.id === selectedId, best = r.result && [...r.result.agents].sort((x, y) => y.total_return - x.total_return)[0];
+      const bestAgent = best && r.agents.find(a => a.id === best.agent_id);
+      const live = r.status === 'running' || r.status === 'queued';
+      return html`<li key=${r.id}><button class=${'run-item' + (sel ? ' is-selected' : '')} aria-current=${sel ? 'true' : undefined} onClick=${() => onSelect(r.id)}>
+        <span class="ri-top"><span class="ri-id">${r.id}</span><${Status} status=${r.status} /></span>
+        <span class="ri-market">${marketShort(r.market)}</span>
+        <span class="ri-foot"><span class="ri-agents">${r.agents.map(a => html`<${Swatch} key=${a.id} a=${a} />`)}<span class="muted"> ${r.agents.length} agents</span></span>
+          <span class=${'ri-best ' + (best ? tone(best.total_return) : '')}>${best ? `${bestAgent.label} ${signed(best.total_return)}` : live ? `${Math.round(100 * r.steps_done / r.steps_total)}%` : 'no result'}</span></span>
+        <span class="ri-when">${relTime(r.created_at)}</span>
+      </button></li>`; })}</ol>
+  </section>`;
+}
+
+function Composer({ market, draft, setDraft, onRun, submit, live }) {
+  const setAgent = (i, patch) => setDraft(d => ({ ...d, agents: d.agents.map((a, j) => j === i ? { ...a, ...patch } : a) }));
+  const setMarket = patch => setDraft(d => ({ ...d, market: { ...d.market, ...patch } }));
+  const busy = submit.state !== 'idle', pct = live ? Math.round(100 * live.steps_done / live.steps_total) : 0;
+  const colored = withColors(draft.agents);
+  const iv = market && market.intervals.find(x => x.id === draft.market.interval);
+  const avail = (sym, id = draft.market.interval) => market && market.symbols.find(x => x.symbol === sym)?.available[id];
+  const chosen = draft.market.symbols.map(s => avail(s)).filter(Boolean);
+  const minDate = chosen.length ? chosen.map(a => a.from).sort().pop() : undefined;
+  const maxDate = chosen.length ? chosen.map(a => a.to).sort()[0] : undefined;
+  const toggle = sym => setMarket({ symbols: draft.market.symbols.includes(sym) ? draft.market.symbols.filter(s => s !== sym) : [...draft.market.symbols, sym] });
+  const pickInterval = id => setDraft(d => {
+    const next = market.intervals.find(x => x.id === id);
+    let { start, end } = d.market;
+    if (next.max_range_days && (Date.parse(end) - Date.parse(start)) / 864e5 > next.max_range_days)
+      start = new Date(Date.parse(end) - (next.max_range_days - 1) * 864e5).toISOString().slice(0, 10);
+    return { ...d, market: { ...d.market, interval: id, start, symbols: d.market.symbols.filter(s => avail(s, id)) } };
+  });
+  const hint = !chosen.length ? 'Pick at least one symbol.'
+    : `Data for this selection: ${day(minDate)} → ${day(maxDate)}.${iv && iv.max_range_days ? ` ${iv.label} runs cover at most ${iv.max_range_days} days.` : ''}`;
+  return html`<form class="sheet composer" aria-labelledby="new-h" onSubmit=${e => { e.preventDefault(); if (!busy) onRun(); }}>
+    <div class="composer-head"><h2 id="new-h" class="label">New run</h2><p>Every agent starts with the same cash and trades the same market.</p></div>
+    <div class="agents">${draft.agents.map((a, i) => {
+      const s = STRATEGIES.find(x => x.id === a.strategy);
+      return html`<div class="agent-row" key=${i}>
+        <${Swatch} a=${colored[i]} />
+        <label class="field f-label"><span>agent</span><input id=${'label-' + i} value=${a.label} onChange=${e => setAgent(i, { label: e.target.value })} /></label>
+        <label class="field f-strategy"><span>strategy</span>
+          <select id=${'strategy-' + i} value=${a.strategy} title=${s.description}
+            onChange=${e => setAgent(i, { strategy: e.target.value, label: SHORT_LABEL[e.target.value], parameters: defaults(e.target.value) })}>
+            ${STRATEGIES.map(x => html`<option key=${x.id} value=${x.id}>${x.name}</option>`)}</select></label>
+        ${s.parameters.map(p => html`<label class="field f-num" key=${p.name}><span>${p.name}</span>
+          <input id=${`p-${i}-${p.name}`} type="number" inputmode="decimal" min=${p.min} max=${p.max} step=${p.type === 'integer' ? 1 : 0.01}
+            value=${a.parameters[p.name]} onChange=${e => setAgent(i, { parameters: { ...a.parameters, [p.name]: e.target.value === '' ? '' : +e.target.value } })} /></label>`)}
+        ${draft.agents.length > 1 && html`<button type="button" class="icon-btn" aria-label=${'Remove ' + a.label} onClick=${() => setDraft(d => ({ ...d, agents: d.agents.filter((_, j) => j !== i) }))}>Remove</button>`}
+      </div>`; })}
+      ${draft.agents.length < MAX_AGENTS && html`<button type="button" class="text-btn" onClick=${() => setDraft(d => ({ ...d, agents: [...d.agents, { label: 'crossover', strategy: 'ma-crossover', parameters: defaults('ma-crossover') }] }))}>+ Add agent</button>`}
+    </div>
+    <div class="market">
+      <div class="field f-symbols"><span>symbols</span><div class="chips" role="group" aria-label="Symbols">
+        ${market ? market.symbols.map(m => { const has = !!m.available[draft.market.interval];
+          return html`<button type="button" key=${m.symbol} class="chip" disabled=${!has} aria-pressed=${draft.market.symbols.includes(m.symbol)}
+            title=${has ? m.name : `${m.name}: no ${iv.label.toLowerCase()} data`} onClick=${() => toggle(m.symbol)}>${m.symbol}</button>`; })
+          : html`<span class="muted">Loading symbols…</span>`}</div></div>
+      <div class="field"><span>interval</span><div class="seg" role="group" aria-label="Bar interval">
+        ${(market ? market.intervals : []).map(v => html`<button type="button" key=${v.id} title=${v.label} aria-pressed=${draft.market.interval === v.id} onClick=${() => pickInterval(v.id)}>${v.id}</button>`)}</div></div>
+      <label class="field f-date"><span>from</span><input id="start" type="date" min=${minDate} max=${maxDate} value=${draft.market.start} onChange=${e => setMarket({ start: e.target.value })} /></label>
+      <label class="field f-date"><span>to</span><input id="end" type="date" min=${minDate} max=${maxDate} value=${draft.market.end} onChange=${e => setMarket({ end: e.target.value })} /></label>
+      <label class="field f-cash"><span>starting cash ($)</span><input id="cash" type="number" min=${MIN_CASH} step="1000" value=${draft.initial_cash} onChange=${e => setDraft(d => ({ ...d, initial_cash: +e.target.value }))} /></label>
+      <label class="field f-cost"><span>costs (bps per side)</span><input id="cost" type="number" min="0" step="0.5" value=${draft.cost_bps}
+        onChange=${e => setDraft(d => ({ ...d, cost_bps: e.target.value === '' ? '' : +e.target.value }))} /></label>
+    </div>
+    <div class="go">
+      ${submit.error ? html`<p class="form-error" role="alert">${submit.error.message}</p>` : html`<p class="muted" style=${{ margin: 0, fontSize: '13px' }}>${hint}</p>`}
+      <button class="run-btn" type="submit" data-state=${submit.state} aria-disabled=${busy} style=${{ '--p': pct + '%' }}>
+        <span>${submit.state === 'submitting' ? 'Starting…' : submit.state === 'running' ? `Running · ${pct}%` : 'Run simulation'}</span><kbd>⌘ ↵</kbd>
+      </button>
+    </div>
+  </form>`;
+}
+
+function chartTheme() {
+  const ink = cssVar('--ink');
+  return { layout: { background: { type: 'solid', color: cssVar('--sheet') }, textColor: cssVar('--ink-2'), fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fontSize: 11 },
+    grid: { vertLines: { color: cssVar('--grid') }, horzLines: { color: cssVar('--grid') } },
+    rightPriceScale: { borderColor: cssVar('--rule') }, timeScale: { borderColor: cssVar('--rule') },
+    crosshair: { vertLine: { color: cssVar('--ink-3'), labelBackgroundColor: ink }, horzLine: { color: cssVar('--ink-3'), labelBackgroundColor: ink } } };
+}
+
+function EquityChart({ run, live }) {
+  const box = useRef(null), chart = useRef(null), series = useRef([]), drawn = useRef({ id: null, n: 0 });
+  useEffect(() => {
+    const c = LightweightCharts.createChart(box.current, { autoSize: true, ...chartTheme(),
+      localization: { priceFormatter: money }, handleScale: { axisPressedMouseMove: false },
+      timeScale: { ...chartTheme().timeScale, shiftVisibleRangeOnNewBar: false, tickMarkFormatter: t => (drawn.current.intraday ? fTickTime : fTick).format(t * 1000) } });
+    chart.current = c;
+    const retheme = () => { c.applyOptions(chartTheme()); series.current.forEach(({ s, color }) => s.applyOptions({ color: cssVar(color) })); };
+    const mq = matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener('change', retheme);
+    const mo = new MutationObserver(retheme); mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => { mq.removeEventListener('change', retheme); mo.disconnect(); c.remove(); };
+  }, []);
+  useEffect(() => {
+    const c = chart.current, d = drawn.current; if (!c || !run) return;
+    if (d.id !== run.id || run.steps.length < d.n) {
+      series.current.forEach(({ s }) => c.removeSeries(s));
+      series.current = run.agents.map((a, k) => {
+        const s = c.addLineSeries({ color: cssVar(a.color), lineWidth: 2, lineStyle: a.strategy === 'buy-and-hold' ? 2 : 0, priceLineVisible: false,
+          lastValueVisible: false, crosshairMarkerRadius: 3, lastPriceAnimation: live && !REDUCED ? 2 : 0 });
+        s.setData(run.steps.map(st => ({ time: st.t, value: st.agents[k].equity })));
+        if (k === 0) s.createPriceLine({ price: run.initial_cash, color: cssVar('--ink-3'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'start' });
+        return { s, color: a.color };
+      });
+      d.id = run.id; d.n = run.steps.length; d.intraday = run.market.interval !== '1d';
+      c.applyOptions({ timeScale: { timeVisible: d.intraday } });
+    } else {
+      for (let i = d.n; i < run.steps.length; i++) series.current.forEach(({ s }, k) => s.update({ time: run.steps[i].t, value: run.steps[i].agents[k].equity }));
+      d.n = run.steps.length;
+    }
+    if (live) c.timeScale().setVisibleLogicalRange({ from: 0, to: Math.max(run.steps_total - 1, 1) });
+    else { series.current.forEach(({ s }) => s.applyOptions({ lastPriceAnimation: 0 })); c.timeScale().fitContent(); }
+  }, [run, live]);
+  return html`<div class="canvas" ref=${box} role="img" aria-label=${run ? `Equity of each agent over time for ${run.id}` : 'Equity chart'}></div>`;
+}
+
+function Leaderboard({ rows }) {
+  return html`<section class="sheet board" aria-labelledby="lb-h"><h3 id="lb-h" class="label">Leaderboard</h3>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Agent</th><th>Equity</th><th>Return</th><th>vs hold</th><th>Max drawdown</th><th>Trades</th></tr></thead>
+      <tbody>${rows.map((r, i) => html`<tr key=${r.a.id}><td class="num">${i + 1}</td>
+        <td><span class="agent-cell"><${Swatch} a=${r.a} />${r.a.label} <small>${r.a.strategy}</small></span></td>
+        <td class="num">${money(r.eq)}</td><td class=${'num ' + tone(r.ret)}>${signed(r.ret)}</td>
+        <td class=${'num ' + (r.vs === null ? 'muted' : tone(r.vs))}>${r.vs === null ? '—' : signed(r.vs, 'pts')}</td>
+        <td class="num loss">${signed(r.dd)}</td><td class="num">${r.trades.toLocaleString('en-US')}</td></tr>`)}</tbody></table></div>
+  </section>`;
+}
+
+function Tape({ run, last }) {
+  const items = [];
+  for (let i = run.steps.length - 1; i >= 0 && items.length < 40; i--)
+    run.steps[i].agents.forEach((x, k) => x.trades.forEach(tr => items.push({ t: run.steps[i].t, a: run.agents[k], ...tr })));
+  const fmt = run.market.interval === '1d' ? fTick : fTickTime;
+  return html`<section class="sheet tape" aria-labelledby="tape-h"><h3 id="tape-h" class="label">Trades</h3>
+    ${items.length ? html`<ol>${items.slice(0, 40).map((x, i) => html`<li key=${i}><span class="muted">${fmt.format(x.t * 1000)}</span><${Swatch} a=${x.a} />
+      <span class=${'side-' + x.side}>${x.side === 'buy' ? 'BUY' : 'SELL'}</span><span>${x.quantity} ${x.symbol} @ ${x.price.toFixed(2)}</span></li>`)}</ol>`
+      : html`<p class="muted" style=${{ margin: 0 }}>No trades yet.</p>`}
+    ${last && html`<details><summary>Last event from <span class="num">/v1/runs/${run.id}/events</span></summary><pre>${'event: ' + last.event + '\ndata: ' + JSON.stringify(last.data, null, 1).slice(0, 600)}</pre></details>`}
+  </section>`;
+}
+
+function RunView({ run, loading, live, last, onReuse }) {
+  if (!run) return null;
+  const rows = standings(run), pct = run.steps_total ? Math.round(100 * run.steps_done / run.steps_total) : 0;
+  const running = run.status === 'running' || run.status === 'queued';
+  return html`<section class="run" aria-labelledby="run-h">
+    <header class="run-head">
+      <div><p class="label">Run · started ${fWhen.format(Date.parse(run.created_at))}</p><h2 id="run-h" class="run-title">${run.id}</h2>
+        <p class="run-meta">${marketLong(run.market)} · ${money(run.initial_cash)} per agent · ${run.cost_bps ? `${run.cost_bps} bps per side` : 'no trading costs'}</p></div>
+      <div class="run-actions"><${Status} status=${run.status} />
+        <button type="button" class="ghost" onClick=${() => onReuse(run)}>${run.status === 'failed' ? 'Run again with these settings' : 'Use these settings'}</button></div>
+    </header>
+    ${running && html`<div class="progress" role="progressbar" aria-label="Simulation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow=${pct}><span style=${{ width: pct + '%' }}></span></div>
+      <p class="progress-text">Step ${run.steps_done.toLocaleString('en-US')} of ${run.steps_total.toLocaleString('en-US')}</p>`}
+    ${run.status === 'failed' && html`<div class="notice" role="status"><p><strong>This run stopped at step ${run.steps_done} of ${run.steps_total}.</strong> ${run.failure.message} Results are kept only for runs that finish.</p></div>`}
+    <div class="sheet plot">
+      <div class="plot-head"><h3 class="label">Equity</h3><div class="legend">${run.agents.map(a => html`<span key=${a.id}><${Swatch} a=${a} />${a.label}</span>`)}</div></div>
+      <${EquityChart} run=${run} live=${live} />
+      ${loading ? html`<div class="overlay loading">Loading ${run.id}…</div>` : !run.steps.length && html`<div class="overlay">${running ? 'Waiting for the first step…' : 'No equity to plot: this run failed before it finished.'}</div>`}
+    </div>
+    <div class="lower">${rows.length ? html`<${Leaderboard} rows=${rows} />` : html`<section class="sheet board"><h3 class="label">Leaderboard</h3><p class="muted">Standings appear once the run produces its first step.</p></section>`}
+      <${Tape} run=${run} last=${live ? last : null} /></div>
+  </section>`;
+}
+
+const INITIAL_DRAFT = {
+  agents: [{ label: 'kronos', strategy: 'kronos-top5', parameters: defaults('kronos-top5') },
+           { label: 'crossover', strategy: 'ma-crossover', parameters: defaults('ma-crossover') },
+           { label: 'hold', strategy: 'buy-and-hold', parameters: {} }],
+  market: { symbols: ['AAPL', 'MSFT', 'NVDA', 'GOOGL'], interval: '1d', start: '2025-01-02', end: LATEST > '2026-09-30' ? '2026-09-30' : LATEST },
+  initial_cash: 100000, cost_bps: COST_DEFAULT_BPS,
+};
+
+function App() {
+  const [runs, setRuns] = useState([]), [selectedId, setSelectedId] = useState(null), [loadingId, setLoadingId] = useState(null);
+  const [draft, setDraft] = useState(INITIAL_DRAFT), [submit, setSubmit] = useState({ state: 'idle', error: null });
+  const [liveId, setLiveId] = useState(null), [last, setLast] = useState(null), [announce, setAnnounce] = useState('');
+  const [marketInfo, setMarketInfo] = useState(null);
+  const patchRun = (id, f) => setRuns(rs => rs.map(r => r.id === id ? { ...r, ...f(r) } : r));
+
+  async function select(id) {
+    setSelectedId(id);
+    const known = runs.find(r => r.id === id);
+    if (known && known.loaded) return;
+    setLoadingId(id);
+    const res = await api.getRun(id);
+    setLoadingId(l => l === id ? null : l);
+    if (res.success) patchRun(id, () => fromView(res.data));
+  }
+
+  useEffect(() => { (async () => {
+    api.getMarket().then(m => m.success && setMarketInfo(m.data));
+    const res = await api.listRuns();
+    const list = res.data.map(v => ({ ...v, agents: withColors(v.agents), steps: [], loaded: false, steps_done: v.progress.steps_done, steps_total: v.progress.steps_total }));
+    setRuns(list);
+    const first = list.find(r => r.status === 'completed');
+    setSelectedId(first.id); setLoadingId(first.id);
+    const full = await api.getRun(first.id);
+    setLoadingId(null);
+    setRuns(rs => rs.map(r => r.id === first.id ? fromView(full.data) : r));
+  })(); }, []);
+
+  async function run() {
+    setSubmit({ state: 'submitting', error: null });
+    const body = { agents: draft.agents.map(({ label, strategy, parameters }) => ({ label: label.trim() || SHORT_LABEL[strategy], strategy, parameters })),
+      market: { symbols: draft.market.symbols, interval: draft.market.interval, start: draft.market.start, end: draft.market.end }, initial_cash: draft.initial_cash,
+      ...(draft.cost_bps === '' ? {} : { cost_bps: draft.cost_bps }) };
+    const res = await api.createRun(body);
+    if (!res.success) { setSubmit({ state: 'idle', error: res.error }); return; }
+    const d = res.data;
+    const fresh = { id: d.id, status: d.status, created_at: d.created_at, market: body.market, initial_cash: body.initial_cash, cost_bps: body.cost_bps ?? 0,
+      agents: withColors(body.agents.map((a, i) => ({ ...a, id: d.agents[i].id }))), steps: [], loaded: true, steps_done: 0, steps_total: d.steps_total, result: null, failure: null };
+    setRuns(rs => [fresh, ...rs]); setSelectedId(d.id); setLiveId(d.id); setSubmit({ state: 'running', error: null });
+    setAnnounce(`Started ${d.id}.`);
+    api.events(d.id, ev => {
+      setLast(ev);
+      if (ev.event === 'step') patchRun(d.id, r => ({ status: 'running', steps: [...r.steps, { t: Date.parse(ev.data.timestamp) / 1000, agents: ev.data.agents }], steps_done: r.steps_done + 1 }));
+      if (ev.event === 'completed') {
+        setRuns(rs => rs.map(r => { if (r.id !== d.id) return r;
+          const top = standings(r)[0];
+          setAnnounce(`${d.id} finished. Best agent: ${top.a.label}, ${signed(top.ret)}.`);
+          return { ...r, status: 'completed', result: { agents: r.agents.map((a, k) => { const eq = r.steps[r.steps.length - 1].agents[k].equity; return { agent_id: a.id, final_equity: eq, total_return: eq / r.initial_cash - 1 }; }) } }; }));
+        setLiveId(null); setSubmit({ state: 'idle', error: null });
+      }
+    });
+  }
+
+  useEffect(() => {
+    const onKey = e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && submit.state === 'idle') { e.preventDefault(); run(); } };
+    addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);
+  });
+
+  const reuse = r => { setDraft({ agents: r.agents.map(({ label, strategy, parameters }) => ({ label, strategy, parameters: { ...parameters } })),
+    market: { ...r.market, symbols: [...r.market.symbols] }, initial_cash: r.initial_cash, cost_bps: r.cost_bps }); setSubmit({ state: submit.state, error: null });
+    document.getElementById('new-h').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); };
+
+  const selected = runs.find(r => r.id === selectedId), liveRun = runs.find(r => r.id === liveId);
+  return html`<div class="shell">
+    <header class="top"><h1 class="mark">trading<span>-</span>dashboard</h1>
+      <div class="top-meta"><span class="tag">mock api · /v1</span><span>Simulation only. Example data, no real money.</span></div></header>
+    <${History} runs=${runs} selectedId=${selectedId} onSelect=${select} />
+    <main style=${{ display: 'grid', gap: '20px', minWidth: 0 }}>
+      <${Composer} market=${marketInfo} draft=${draft} setDraft=${setDraft} onRun=${run} submit=${submit} live=${liveRun} />
+      <${RunView} run=${selected} loading=${loadingId === selectedId} live=${selectedId === liveId} last=${last} onReuse=${reuse} />
+    </main>
+    <p class="foot">Mockup for trading-dashboard. Bodies follow the draft v1 contract: snake_case fields, a { success, data, error, meta } envelope, server-sent events for live steps, and strategies, symbols, intervals and date availability served by the API (GET /v1/strategies, GET /v1/market). Costs default to 0 on the server when a run omits them.</p>
+    <p class="sr" aria-live="polite">${announce}</p>
+  </div>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
+</script>
