@@ -5,7 +5,6 @@ type Schemas = components["schemas"];
 export type RunSummary = Schemas["RunSummary"];
 export type RunListEnvelope = Schemas["RunListEnvelope"];
 export type ErrorEnvelope = Schemas["ErrorEnvelope"];
-export type Page = Schemas["Page"];
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/mock";
 
@@ -25,12 +24,6 @@ async function getJson<T extends { success: true }>(path: string): Promise<T> {
   return body;
 }
 
-export interface ListRunsResult {
-  runs: RunSummary[];
-  page: Page;
-}
-
-export async function listRuns(page = 1, limit = 20): Promise<ListRunsResult> {
-  const body = await getJson<RunListEnvelope>(`/v1/runs?page=${page}&limit=${limit}`);
-  return { runs: body.data, page: body.meta };
+export async function listRuns(): Promise<RunListEnvelope> {
+  return getJson<RunListEnvelope>("/v1/runs");
 }

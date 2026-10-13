@@ -47,14 +47,17 @@ function RunItem({ run }: { run: RunSummary }) {
       <span className={styles.market}>{marketShort(run.market)}</span>
       <span className={`${styles.row} ${styles.foot}`}>
         <span className={styles.agents}>
-          {run.agents.map((agent, index) => (
-            <i
-              key={agent.id}
-              className={agent.strategy === "buy-and-hold" ? `${styles.swatch} ${styles.hold}` : styles.swatch}
-              style={{ background: `var(${colors[index]})` }}
-              title={agent.label}
-            />
-          ))}
+          {run.agents.map((agent, index) => {
+            const hold = colors[index] === "--hold";
+            return (
+              <i
+                key={agent.id}
+                className={hold ? `${styles.swatch} ${styles.hold}` : styles.swatch}
+                style={hold ? undefined : { background: `var(${colors[index]})` }}
+                title={agent.label}
+              />
+            );
+          })}
           <span className="muted">{` ${run.agents.length} agents`}</span>
         </span>
         <RunOutcome run={run} />
@@ -71,7 +74,7 @@ export function RunsList() {
 
   useEffect(() => {
     listRuns()
-      .then(({ runs, page }) => setState({ status: "ready", runs, total: page.total }))
+      .then(({ data, meta }) => setState({ status: "ready", runs: data, total: meta.total }))
       .catch((error: Error) => setState({ status: "failed", message: error.message }));
   }, []);
 

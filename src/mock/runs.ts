@@ -1,4 +1,4 @@
-import type { ErrorEnvelope, RunListEnvelope, RunSummary } from "@/api/client";
+import type { RunSummary } from "@/api/client";
 
 const DEFAULTS = { fast: 10, slow: 50, stop_loss: 0.05 };
 const SYMBOLS = ["SYN01", "SYN02", "SYN03", "SYN04", "SYN05", "SYN06", "SYN07", "SYN08"];
@@ -92,25 +92,3 @@ export const MOCK_RUNS: RunSummary[] = [
     failure: null,
   },
 ];
-
-const MAX_LIMIT = 100;
-
-function wholeNumber(value: string | null, fallback: number): number {
-  return value === null ? fallback : Number(value);
-}
-
-export interface MockResponse {
-  status: number;
-  body: RunListEnvelope | ErrorEnvelope;
-}
-
-export function listMockRuns(params: URLSearchParams): MockResponse {
-  const page = wholeNumber(params.get("page"), 1);
-  const limit = wholeNumber(params.get("limit"), 20);
-  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > MAX_LIMIT) {
-    const message = `page must be a whole number from 1 and limit from 1 to ${MAX_LIMIT}.`;
-    return { status: 400, body: { success: false, data: null, error: { code: "invalid_parameters", message }, meta: null } };
-  }
-  const data = MOCK_RUNS.slice((page - 1) * limit, page * limit);
-  return { status: 200, body: { success: true, data, error: null, meta: { total: MOCK_RUNS.length, page, limit } } };
-}
