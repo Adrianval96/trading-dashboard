@@ -1,4 +1,4 @@
-import type { RunSummary } from "@/services/api";
+import type { RunSummary } from "@/types";
 
 const HOUR_MS = 3_600_000;
 

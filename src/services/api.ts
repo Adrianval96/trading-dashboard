@@ -1,10 +1,4 @@
-import type { components } from "@/types";
-
-type Schemas = components["schemas"];
-
-export type RunSummary = Schemas["RunSummary"];
-export type RunListEnvelope = Schemas["RunListEnvelope"];
-export type ErrorEnvelope = Schemas["ErrorEnvelope"];
+import type { ErrorEnvelope, RunListEnvelope } from "@/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/mock";
 

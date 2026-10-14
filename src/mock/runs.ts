@@ -1,4 +1,4 @@
-import type { RunSummary } from "@/services/api";
+import type { RunSummary } from "@/types";
 
 const DEFAULTS = { fast: 10, slow: 50, stop_loss: 0.05 };
 const SYMBOLS = [
