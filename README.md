@@ -2,7 +2,7 @@
 
 A web dashboard for [strategy-arena](https://github.com/Adrianval96/strategy-arena), a daily trading simulator where several agents trade the same past market side by side. The dashboard starts simulation runs, follows them live and compares the agents. Simulation only: no real money.
 
-It talks to the strategy-arena engine service through a fixed HTTP contract, pinned in [`contract/openapi.yaml`](contract/openapi.yaml). Until it points at a running service, it uses a mock API inside this app that answers in the same shapes.
+It talks to the strategy-arena engine service through a fixed v1 HTTP contract. The contract is written in OpenAPI 3.1, one file per call, and kept outside this repo; files dropped into `contracts/` are left alone by the formatter. Until the app points at a running service, it uses a mock API inside this app that answers in the same shapes.
 
 ## What exists
 
@@ -40,14 +40,13 @@ npm run build
 
 Same conventions as Cinematic State: a component is a PascalCase folder with `index.tsx` and a plain `styles.css` using BEM-style class names (`runs-list__run`), pages render a page component, and tests sit in `__tests__/` folders next to what they cover, integration first.
 
-| Path                    | What it holds                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `contract/openapi.yaml` | The API contract, copied from strategy-arena. It changes there first, then gets copied here |
-| `src/types.ts`          | Types generated from the contract with `npm run generate:types`; don't edit by hand         |
-| `src/services/api.ts`   | Typed calls to the API; a `success: false` envelope becomes an `ApiError`                   |
-| `src/mock/`             | The mock API's sample runs; the route handlers under `src/app/api/mock/v1/` serve them      |
-| `src/components/`       | UI: `HomePage` loads the data, `RunsList` renders it                                        |
-| `src/utilities/`        | Formatting helpers                                                                          |
-| `src/app/_tokens.css`   | Colours and fonts, imported by `globals.css`                                                |
+| Path                  | What it holds                                                                          |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| `src/types.ts`        | Types for the parts of the contract the app uses, written by hand                      |
+| `src/services/api.ts` | Typed calls to the API; a `success: false` envelope becomes an `ApiError`              |
+| `src/mock/`           | The mock API's sample runs; the route handlers under `src/app/api/mock/v1/` serve them |
+| `src/components/`     | UI: `HomePage` loads the data, `RunsList` renders it                                   |
+| `src/utilities/`      | Formatting helpers                                                                     |
+| `src/app/_tokens.css` | Colours and fonts, imported by `globals.css`                                           |
 
 Every API response is a `{ success, data, error, meta }` envelope with snake_case fields; times are ISO 8601 with a time zone.

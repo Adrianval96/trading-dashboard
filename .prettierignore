@@ -1,4 +1,3 @@
-contract/
+contracts/
 design/
-src/types.ts
 package-lock.json
